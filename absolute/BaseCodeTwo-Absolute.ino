@@ -9,7 +9,16 @@ int t=0; //time in ms
 int t0=0; //memory for time in ms
 int finish=0; //finish indicator
 int rep=1; //Repetition indicator
-
+int res = 11.25;
+int T5 = A5;
+int T4 = A4;
+int T3 = A3;
+int T2 = A2 ;
+int T1 = A1;
+byte start_pos_gray; 
+int current_pos = 0;   
+byte final_pos_gray = 0; 
+int final_pos_angle;
 
 void setup() {
   Serial.begin(250000); //Baud rate of communication 
@@ -23,7 +32,9 @@ void setup() {
   {
     analogWrite(3,255); //change the direction of rotation by applying voltage to pin 3 of arduino
   }
-  deg=abs(deg);                                       
+  deg=abs(deg);   
+  start_pos_gray = readGray(); 
+  current_pos = 0;                                     
 }
 
 float kp = .6*90/deg; //proportional gain of PI
@@ -52,6 +63,9 @@ if (t%10==0) //PI controller that runs every 10ms
     delay(1);
 }
 
+//OUR SENSOR
+
+
 //FOR READING THE SENSOR
     sm1 = digitalRead(7); //reading chanel 1 
     sm2 = digitalRead(8); //reading chanel 2
@@ -67,6 +81,7 @@ if (t%10==0) //PI controller that runs every 10ms
 
 t=millis();
 finish=1;
+
   }
 
 if (finish==1){                                
@@ -90,6 +105,39 @@ if (finish==1){
       Serial.println();
       s = 0;
       finish=0; 
+      currentcount = 0;
 }
 analogWrite(6,0); //turning off the motor
 }
+
+byte readGray() {
+  byte g = 0;
+  g |= ((AnalogueRead(T1) > threshold) << 0)
+  g |= ((AnalogueRead(T2) > threshold) << 1)
+  g |= ((AnalogueRead(T3) > threshold) << 2)
+  g |= ((AnalogueRead(T4) > threshold) << 3)
+  g |= ((AnalogueRead(T5) > threshold) << 4)
+  return g; 
+}
+
+int angleMoved(byte start, byte end) {
+
+  int diff = start - end; 
+  int angle = diff * res; 
+  if deff < 0 ? return 
+}
+
+int convertGrayBinary(byte g) { 
+  byte b = 0; 
+  b << 4 = g << 4; 
+  for (int i = 3; i >= 0; i --) {
+    b >> i = g >> i ^= 
+  }
+}
+
+
+
+
+
+
+
