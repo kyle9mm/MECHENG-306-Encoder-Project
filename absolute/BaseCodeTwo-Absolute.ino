@@ -34,7 +34,10 @@ void setup() {
   }
   deg=abs(deg);   
   start_pos_gray = readGray(); 
-  current_pos = 0;                                     
+  current_pos = 0;    
+  //int gray = 4; 
+  //int bin = grayTobinary(gray); 
+  //print(bin);                                  
 }
 
 float kp = .6*90/deg; //proportional gain of PI
@@ -88,24 +91,26 @@ if (finish==1){
   //this part of the code is for displaying the result
       delay(500);
       rep=rep+1;
+      int opticalAngle = angleMoved(start_pos_gray, readGray());
+      int angleFromHome = angleMoved(0, readGray()); 
 
       //FROM OUR ENCODER BUILDS
       Serial.print("shaft possition from optical absolute sensor from home position: ");
-      Serial.println(0);
+      Serial.println(angleFromHome);
       
       Serial.print("shaft displacement from optical absolute sensor: ");
-      Serial.println(0);
+      Serial.println(opticalAngle);
       
       Serial.print("Shaft displacement from motor's builtin encoder: ");
       Serial.println(s * 360 / 228); //every full Revolution of the shaft is associated with 228 counts of builtin s = built in encoder counts
                                                                     
-      float Error=0-s*360/228;
+      float Error=opticalAngle-s*360/228;
       Serial.print("Error :");
       Serial.println(Error); //displaying error
       Serial.println();
       s = 0;
       finish=0; 
-      currentcount = 0;
+  
 }
 analogWrite(6,0); //turning off the motor
 }
@@ -120,20 +125,25 @@ byte readGray() {
   return g; 
 }
 
+byte grayToBinary(byte g) {
+  g ^= g >> 1;
+  g ^= g >> 2;
+  g ^= g >> 4;
+  return g;
+}
+
 int angleMoved(byte start, byte end) {
-
-  int diff = start - end; 
-  int angle = diff * res; 
-  if deff < 0 ? return 
-}
-
-int convertGrayBinary(byte g) { 
-  byte b = 0; 
-  b << 4 = g << 4; 
-  for (int i = 3; i >= 0; i --) {
-    b >> i = g >> i ^= 
+  int diff = grayToBinary(start) - grayToBinary(end); 
+  if (diff > 9) {
+    diff = diff -32; 
+  } else if ( diff < -9) {
+    diff = diff + 32;
   }
+
+  return diff * res; 
 }
+
+
 
 
 
