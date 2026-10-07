@@ -10,15 +10,16 @@ int t0=0; //memory for time in ms
 int finish=0; //finish indicator
 int rep=1; //Repetition indicator
 int res = 11.25;
-int T5 = A5;
-int T4 = A4;
+int T5 = A1;
+int T4 = A2;
 int T3 = A3;
-int T2 = A2 ;
-int T1 = A1;
+int T2 = A4 ;
+int T1 = A5;
 byte start_pos_gray; 
 int current_pos = 0;   
 byte final_pos_gray = 0; 
 int final_pos_angle;
+int threshold = 3.5; 
 
 void setup() {
   Serial.begin(250000); //Baud rate of communication 
@@ -91,8 +92,9 @@ if (finish==1){
   //this part of the code is for displaying the result
       delay(500);
       rep=rep+1;
-      int opticalAngle = angleMoved(start_pos_gray, readGray());
-      int angleFromHome = angleMoved(0, readGray()); 
+      final_pos_gray = readGray(); 
+      int opticalAngle = angleMoved(start_pos_gray, final_pos_gray);
+      int angleFromHome = angleMoved(0, final_pos_gray); 
 
       //FROM OUR ENCODER BUILDS
       Serial.print("shaft possition from optical absolute sensor from home position: ");
@@ -117,11 +119,11 @@ analogWrite(6,0); //turning off the motor
 
 byte readGray() {
   byte g = 0;
-  g |= ((AnalogueRead(T1) > threshold) << 0)
-  g |= ((AnalogueRead(T2) > threshold) << 1)
-  g |= ((AnalogueRead(T3) > threshold) << 2)
-  g |= ((AnalogueRead(T4) > threshold) << 3)
-  g |= ((AnalogueRead(T5) > threshold) << 4)
+  g |= ((analogRead(T1) > threshold) << 0);
+  g |= ((analogRead(T2) > threshold) << 1);
+  g |= ((analogRead(T3) > threshold) << 2);
+  g |= ((analogRead(T4) > threshold) << 3);
+  g |= ((analogRead(T5) > threshold) << 4);
   return g; 
 }
 
@@ -142,12 +144,3 @@ int angleMoved(byte start, byte end) {
 
   return diff * res; 
 }
-
-
-
-
-
-
-
-
-
