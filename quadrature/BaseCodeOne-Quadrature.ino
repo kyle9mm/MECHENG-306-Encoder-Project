@@ -30,7 +30,7 @@ int repeat=0;    //repeat indicator to only let the memory of time for the Purpo
 // 24 slots + 24 blocked per track, track B offset a quarter cycle from track A.
 // Convention from our hand tests: CW = outer track (A) leads inner (B), CCW = inner leads outer.
 
-const int QUAD_LED_PIN = A1;   // drives both quadrature IR LEDs
+const int QUAD_LED_PIN = 13;   // drives both quadrature IR LEDs
 const int QUAD_PIN_A   = A5;   // : outer track phototransistor (channel A)
 const int QUAD_PIN_B   = A4;   // : inner track phototransistor (channel B)
 
