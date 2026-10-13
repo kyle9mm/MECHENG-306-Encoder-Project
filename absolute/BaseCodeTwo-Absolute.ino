@@ -9,19 +9,37 @@ int t=0; //time in ms
 int t0=0; //memory for time in ms
 int finish=0; //finish indicator
 int rep=1; //Repetition indicator
-int res = 11.25;
+float res = 11.25;
+float error_vector[10];
+ 
 int T5 = A1;
 int T4 = A2;
 int T3 = A3;
-int T2 = A4 ;
+int T2 = A4;
 int T1 = A5;
 byte start_pos_gray; 
+byte home;
 int current_pos = 0;   
 byte final_pos_gray = 0; 
 int final_pos_angle;
-int threshold = 3.5; 
+int threshold = 150;
 
 void setup() {
+  pinMode(11, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+
+  digitalWrite(11, HIGH);
+  digitalWrite(12, HIGH);
+  digitalWrite(13, HIGH);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+  pinMode(A4, INPUT);
+  pinMode(A5, INPUT);
+  
+
+
   Serial.begin(250000); //Baud rate of communication 
   Serial.println("Enter the desired rotation in degree.");  
   while (Serial.available() == 0) //Obtaining data from user
@@ -35,17 +53,81 @@ void setup() {
   }
   deg=abs(deg);   
   start_pos_gray = readGray(); 
-  current_pos = 0;    
-  //int gray = 4; 
-  //int bin = grayTobinary(gray); 
-  //print(bin);                                  
+  home = readGray();
+  current_pos = 0;                               
 }
 
 float kp = .6*90/deg; //proportional gain of PI
 float ki = .02; //integral gain of PI 
 
+byte readGray() {
+  byte g = 0;
+  g |= ((analogRead(T1) < threshold) << 0);
+  g |= ((analogRead(T2) < threshold) << 1);
+  g |= ((analogRead(T3) < threshold) << 2);
+  g |= ((analogRead(T4) < threshold) << 3);
+  g |= ((analogRead(T5) < threshold) << 4);
+  
+  return g; 
+}
+
+void printGray(byte g) {
+  byte sector = grayToBinary(g);
+  for (int i = 4; i >= 0; i--) Serial.print((g >> i) & 1);
+  Serial.print("  sector ");
+  Serial.println(sector);
+}
+
+
+const byte GRAY_TABLE[32] = {
+  0b00000, 0b00001, 0b00011, 0b00010,   // 0-3
+  0b00110, 0b00111, 0b00101, 0b00100,   // 4-7
+  0b01100, 0b01101, 0b01111, 0b01110,   // 8-11
+  0b01010, 0b01011, 0b01001, 0b01000,   // 12-15
+  0b11000, 0b11001, 0b11011, 0b11010,   // 16-19
+  0b11110, 0b11111, 0b11101, 0b11100,   // 20-23
+  0b10100, 0b10101, 0b10111, 0b10110,   // 24-27
+  0b10010, 0b10011, 0b10001, 0b10000    // 28-31
+};
+
+byte grayToBinary(byte g) {
+  for (byte n = 0; n < 32; n++) {
+    if (GRAY_TABLE[n] == g) return n;
+  }
+  return 0;   // not reachable: all 32 five-bit codes are in the table
+}
+
+float angleMoved(byte end, byte start) {
+  int diff = grayToBinary(end) - grayToBinary(start); 
+  if (diff > 10) {
+    diff = diff - 32; 
+  } else if ( diff < -10) {
+    diff = diff + 32;
+  }
+  return diff * res; 
+}
+
+float bestEightAverage() {
+  float sum = 0;
+  float max1 = -1, max2 = -1; // largest and second largest
+
+  for (int i = 0; i < 10; i++) {
+    float e = error_vector[i];
+    sum += e;
+    if (e > max1)      { max2 = max1; max1 = e; }
+    else if (e > max2) { max2 = e; }
+  }
+  return (sum - max1 - max2) / 8.0;
+}
+
 void loop() {
 //THIS SECTION IS FOR MOVING THE THING, DON'T TOUCH IT
+// Keep track of the sector and if sector changes print the new sector
+if (readGray() != current_pos) {
+  current_pos = readGray(); 
+  printGray(current_pos); 
+}
+
 t=millis(); //reading time
 t0=t; //saving the current time in memory
   while (t<t0+4000 && rep<=10){ //let the code to ran for 4 seconds each with repetitions of 10
@@ -93,54 +175,47 @@ if (finish==1){
       delay(500);
       rep=rep+1;
       final_pos_gray = readGray(); 
-      int opticalAngle = angleMoved(start_pos_gray, final_pos_gray);
-      int angleFromHome = angleMoved(0, final_pos_gray); 
-
+      float opticalAngle = angleMoved(final_pos_gray, start_pos_gray);
+      float angleFromHome = angleMoved(final_pos_gray, home); 
+      String direction = "";
+      if (opticalAngle>0){
+        direction = "CW";
+      } else if (opticalAngle < 0){
+        direction = "CCW";
+      }
+      opticalAngle = abs(opticalAngle);
       //FROM OUR ENCODER BUILDS
       Serial.print("shaft possition from optical absolute sensor from home position: ");
       Serial.println(angleFromHome);
-      
       Serial.print("shaft displacement from optical absolute sensor: ");
       Serial.println(opticalAngle);
+      Serial.println("Direction: " + direction);
       
       Serial.print("Shaft displacement from motor's builtin encoder: ");
       Serial.println(s * 360 / 228); //every full Revolution of the shaft is associated with 228 counts of builtin s = built in encoder counts
-                                                                    
-      float Error=opticalAngle-s*360/228;
+
+      ////////////////////////
+      Serial.print("Gray code: ");
+for (int i = 4; i >= 0; i--) Serial.print((final_pos_gray >> i) & 1);
+Serial.print(")  sector ");
+Serial.println(grayToBinary(final_pos_gray));
+Serial.println("raw T5..T1: " + String(analogRead(T5)) + " " + String(analogRead(T4)) + " " + String(analogRead(T3)) + " " + String(analogRead(T2)) + " " + String(analogRead(T1)));
+/////////////////////////
+
+      float Error = opticalAngle -s*360/228;
+      start_pos_gray = readGray();
+      error_vector[rep-1] =  abs(Error);
       Serial.print("Error :");
       Serial.println(Error); //displaying error
       Serial.println();
+      delay(500);
       s = 0;
       finish=0; 
-  
-}
-analogWrite(6,0); //turning off the motor
-}
+      analogWrite(6,0);
 
-byte readGray() {
-  byte g = 0;
-  g |= ((analogRead(T1) > threshold) << 0);
-  g |= ((analogRead(T2) > threshold) << 1);
-  g |= ((analogRead(T3) > threshold) << 2);
-  g |= ((analogRead(T4) > threshold) << 3);
-  g |= ((analogRead(T5) > threshold) << 4);
-  return g; 
-}
-
-byte grayToBinary(byte g) {
-  g ^= g >> 1;
-  g ^= g >> 2;
-  g ^= g >> 4;
-  return g;
-}
-
-int angleMoved(byte start, byte end) {
-  int diff = grayToBinary(start) - grayToBinary(end); 
-  if (diff > 9) {
-    diff = diff -32; 
-  } else if ( diff < -9) {
-    diff = diff + 32;
-  }
-
-  return diff * res; 
+      if (rep > 10) {
+        Serial.print("Average error, best 8 of 10: ");
+        Serial.println(bestEightAverage());
+      }
+    }
 }
