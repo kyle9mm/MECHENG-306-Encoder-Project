@@ -22,7 +22,14 @@ byte home;
 int current_pos = 0;   
 byte final_pos_gray = 0; 
 int final_pos_angle;
-int threshold = 150;
+int threshold = 200;
+
+////////////////////////////////////////////////////
+void printBits5(byte g) {
+  for (int i = 4; i >= 0; i--) Serial.print((g >> i) & 1);
+}
+/////////////////////////////////////////////////////
+
 
 void setup() {
   pinMode(11, OUTPUT);
@@ -124,8 +131,7 @@ void loop() {
 //THIS SECTION IS FOR MOVING THE THING, DON'T TOUCH IT
 // Keep track of the sector and if sector changes print the new sector
 if (readGray() != current_pos) {
-  current_pos = readGray(); 
-  printGray(current_pos); 
+  current_pos = readGray();
 }
 
 t=millis(); //reading time
@@ -177,6 +183,9 @@ if (finish==1){
       final_pos_gray = readGray(); 
       float opticalAngle = angleMoved(final_pos_gray, start_pos_gray);
       float angleFromHome = angleMoved(final_pos_gray, home); 
+      if (angleFromHome < 0) {
+        angleFromHome = angleFromHome + 360;
+      }
       String direction = "";
       if (opticalAngle>0){
         direction = "CW";
@@ -190,17 +199,9 @@ if (finish==1){
       Serial.print("shaft displacement from optical absolute sensor: ");
       Serial.println(opticalAngle);
       Serial.println("Direction: " + direction);
-      
+      Serial.print("Start gray: ");
       Serial.print("Shaft displacement from motor's builtin encoder: ");
       Serial.println(s * 360 / 228); //every full Revolution of the shaft is associated with 228 counts of builtin s = built in encoder counts
-
-      ////////////////////////
-      Serial.print("Gray code: ");
-for (int i = 4; i >= 0; i--) Serial.print((final_pos_gray >> i) & 1);
-Serial.print(")  sector ");
-Serial.println(grayToBinary(final_pos_gray));
-Serial.println("raw T5..T1: " + String(analogRead(T5)) + " " + String(analogRead(T4)) + " " + String(analogRead(T3)) + " " + String(analogRead(T2)) + " " + String(analogRead(T1)));
-/////////////////////////
 
       float Error = opticalAngle -s*360/228;
       start_pos_gray = readGray();
