@@ -149,12 +149,12 @@ if (b%100==0)
   Serial.println((s/(228))*12);                         //formula for rpm in each 5s
   
   Serial.print("RPM from optical quadrature encoder: ");
-  // Serial.println(0);                                 // BASE line (replaced by the NEW line below)
-  Serial.println(quadRPM);                              // NEW: print our encoder's RPM
+  // Serial.println(0);                                 
+  Serial.println(quadRPM);   // print our encoder's RPM
   
   Serial.print("Error: ");
-  // Serial.println(-(s/(228))*12);                     // BASE line (replaced by the NEW line below)
-  Serial.println(quadRPM - (s/(228))*12);               // NEW: error = ours - built-in (as the brief defines it)
+  // Serial.println(-(s/(228))*12);               
+  Serial.println(quadRPM - (s/(228))*12);    // error = ours - built-in 
   
   Serial.print("direction read by motor's sensor: ");
   if (dirm==0){Serial.print("CW");}
@@ -162,8 +162,8 @@ if (b%100==0)
   Serial.print("  ,   ");
   
   Serial.print("direction read by sensor:  ");
-  // Serial.println("");                                // BASE line (replaced by the NEW line below)
-  Serial.println(getQuadratureDirectionString());       // NEW: print CW or CCW from our encoder
+  // Serial.println("");                              
+  Serial.println(getQuadratureDirectionString());  // print CW or CCW from our encoder
   Serial.println();
 
   s=0;
